@@ -489,7 +489,8 @@ static inline void pool_release(struct worker_ctx *worker, struct mempool *mp)
 static int subreq_key(char *dst, knot_pkt_t *pkt)
 {
 	assert(pkt);
-	return kr_rrkey(dst, knot_pkt_qname(pkt), knot_pkt_qtype(pkt), knot_pkt_qclass(pkt));
+	return kr_rrkey(dst, knot_pkt_qclass(pkt), knot_pkt_qname(pkt),
+			knot_pkt_qtype(pkt), knot_pkt_qtype(pkt));
 }
 
 /** Create and initialize a request_ctx (on a fresh mempool).
