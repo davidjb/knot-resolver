@@ -80,6 +80,40 @@ static void update_nsrep_set(struct kr_nsrep *ns, const knot_dname_t *name, uint
 	}
 }
 
+static void try_append_nsrep(struct kr_nsrep *ns, uint8_t *addr, size_t addr_len, int port)
+{
+
+	for (size_t i = 0; i < KR_NSREP_MAXADDR; ++i) {
+		if (ns->addr[i].ip.sa_family == AF_UNSPEC) {
+			switch(addr_len) {
+			case sizeof(struct in_addr):
+				ADDR_SET(ns->addr[i].ip4.sin, AF_INET, addr, addr_len, port); break;
+			case sizeof(struct in6_addr):
+				ADDR_SET(ns->addr[i].ip6.sin6, AF_INET6, addr, addr_len, port); break;
+			default: assert(0); break;
+			}
+		}
+	}
+}
+
+static void update_nsrep_try_append(struct kr_nsrep *ns, uint8_t *addr[])
+{
+	/* NSLIST is not empty, empty NS cannot be a leader. */
+	if (!addr[0] && ns->addr[0].ip.sa_family != AF_UNSPEC) {
+		return;
+	}
+	for (size_t i = 0; i < KR_NSREP_MAXADDR; ++i) {
+		if (addr[i]) {
+			void *addr_val = pack_obj_val(addr[i]);
+			size_t len = pack_obj_len(addr[i]);
+			try_append_nsrep(ns, addr_val, len, KR_DNS_PORT);
+		} else {
+			break;
+		}
+	}
+}
+
+
 #undef ADDR_SET
 
 /** Scan addr_set and choose the best KR_NSREP_MAXADDR (or fewer) addresses.
@@ -277,6 +311,7 @@ static int eval_nsrep(const char *k, void *v, void *baton)
 		ret = 1;
 
 	} else { /* We don't want this one. */
+		update_nsrep_try_append(ns, addr_choice);
 		return kr_ok();
 	}
 
