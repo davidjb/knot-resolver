@@ -98,8 +98,7 @@ static void try_append_nsrep(struct kr_nsrep *ns, uint8_t *addr, size_t addr_len
 
 static void update_nsrep_try_append(struct kr_nsrep *ns, uint8_t *addr[])
 {
-	/* NSLIST is not empty, empty NS cannot be a leader. */
-	if (!addr[0] && ns->addr[0].ip.sa_family != AF_UNSPEC) {
+	if (!addr[0]) {
 		return;
 	}
 	for (size_t i = 0; i < KR_NSREP_MAXADDR; ++i) {
