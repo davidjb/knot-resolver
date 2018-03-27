@@ -852,14 +852,14 @@ static void update_nslist_score(struct kr_request *request, struct kr_query *qry
 	/* On successful answer, update preference list RTT and penalise timer  */
 	if (request->state != KR_STATE_FAIL) {
 		/* Update RTT information for preference list */
-		update_nslist_rtt(ctx, qry, src);
 		/* Do not complete NS address resolution on soft-fail. */
 		const int rcode = packet ? knot_wire_get_rcode(packet->wire) : 0;
 		if (rcode != KNOT_RCODE_SERVFAIL && rcode != KNOT_RCODE_REFUSED) {
 			qry->flags.AWAIT_IPV6 = false;
 			qry->flags.AWAIT_IPV4 = false;
+			update_nslist_rtt(ctx, qry, src);
 		} else { /* Penalize SERVFAILs. */
-			kr_nsrep_update_rtt(&qry->ns, src, KR_NS_PENALTY, ctx->cache_rtt, KR_NS_ADD);
+			kr_nsrep_update_rtt(&qry->ns, src, KR_NS_DEAD, ctx->cache_rtt, KR_NS_UPDATE_NORESET);
 		}
 	/* Penalise resolution failures except validation failures. */
 	} else if (!(qry->flags.DNSSEC_BOGUS)) {
@@ -870,6 +870,8 @@ static void update_nslist_score(struct kr_request *request, struct kr_query *qry
 			inet_ntop(src->sa_family, kr_inaddr(src), addr_str, sizeof(addr_str));
 			VERBOSE_MSG(qry, "=> server: '%s' flagged as 'bad'\n", addr_str);
 		}
+	} else {
+		update_nslist_rtt(ctx, qry, src);
 	}
 }
 
@@ -1290,8 +1292,13 @@ static int zone_cut_check(struct kr_request *request, struct kr_query *qry, knot
 	 * (and need glue from parent), or DS refetch. */
 	if (qry->parent) {
 		const knot_dname_t *parent = qry->parent->zone_cut.name;
-		if (parent[0] != '\0' && knot_dname_in(parent, qry->sname)) {
-			requested_name = knot_wire_next_label(parent, NULL);
+		if (parent[0] != '\0') {
+			int matched_labels = knot_dname_matched_labels(parent, requested_name);
+			int qname_labels = knot_dname_labels(requested_name, NULL);
+			while (qname_labels > matched_labels) {
+				requested_name = knot_wire_next_label(requested_name, NULL);
+				qname_labels = knot_dname_labels(requested_name, NULL);
+			}
 		}
 	} else if ((qry->stype == KNOT_RRTYPE_DS) && (qry->sname[0] != '\0')) {
 		/* If this is explicit DS query, start from encloser too. */

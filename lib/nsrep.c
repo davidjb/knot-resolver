@@ -281,6 +281,11 @@ static int eval_nsrep(const char *k, void *v, void *baton)
 				}
 			}
 		}
+		ns->addr[0].ip.sa_family = AF_UNSPEC;
+		ns->reputation = reputation;
+		ns->score = score;
+		ns->name = (knot_dname_t *)k;
+		return 1;
 	} else {
 		score = eval_addr_set(addr_set, ctx, addr_choice, &retry_timeouted);
 	}
