@@ -63,6 +63,18 @@ To test this feature you need to either :ref:`configure Knot Resolver as DNS-ove
 
 When multiple servers are specified, the one with the lowest round-trip time is used.
 
+CA+hostname authentication
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Traditional PKI authentication requires server to present certificate with specified hostname, which is issued by one of trusted CAs. Example policy is:
+
+.. code-block:: lua
+
+        policy.TLS_FORWARD({
+                {'2001:DB8::d0c', hostname='res.example.com', ca_file='/etc/knot-resolver/tlsca.crt'}})
+
+- `hostname` must exactly match hostname in server's certificate, i.e. in most cases it must not contain trailing dot (`res.example.com`).
+- `ca_file` must be path to CA certificate (or certificate bundle) in PEM format.
+
 TLS Examples
 ~~~~~~~~~~~~
 
@@ -82,7 +94,7 @@ TLS Examples
 	  policy.TLS_FORWARD({ -- please note that { here starts list of servers
 		{'192.0.2.1', pin_sha256='Wg=='},
 		-- server must present certificate issued by specified CA and hostname must match
-		{'2001:DB8::d0c', hostname='res.example.', ca_file='/etc/knot-resolver/tlsca.crt'}
+		{'2001:DB8::d0c', hostname='res.example.com', ca_file='/etc/knot-resolver/tlsca.crt'}
 	})
 
 .. _policy_examples:
