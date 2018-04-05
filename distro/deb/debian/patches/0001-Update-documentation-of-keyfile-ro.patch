@@ -1,0 +1,29 @@
+From ade442c15c6548ee03c3b1c26d666f27cd2603bc Mon Sep 17 00:00:00 2001
+From: Tomas Krizek <tomas.krizek@nic.cz>
+Date: Thu, 5 Apr 2018 18:07:20 +0200
+Subject: [PATCH] Update documentation of --keyfile-ro
+
+Mention Debian uses OS package management to update the trust anchors
+file.
+---
+ doc/kresd.8.in | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/doc/kresd.8.in b/doc/kresd.8.in
+index 266e9f05..67676450 100644
+--- a/doc/kresd.8.in
++++ b/doc/kresd.8.in
+@@ -136,6 +136,10 @@ and is compatible with Unbound and BIND 9 root key files.
+ .B \-K\fI keyfile\fR, \fB\-\-keyfile\-ro=\fI<keyfile>
+ (Discouraged) Static root trust anchors file. The file is not updated by kresd. Use of this option is discouraged because it will break your installation when the trust anchor key changes!
+ 
++On Debian, this file is automatically updated when dns-root-data package
++is upgraded. Please ensure that any running kresd instances are restarted
++if the trust anchors change.
++
+ Default: "@KEYFILE_DEFAULT@" (can be empty if your distribution did not provide one)
+ .TP
+ .B \-m\fI path\fR, \fB\-\-moduledir=\fI<path>
+-- 
+2.14.3
+
